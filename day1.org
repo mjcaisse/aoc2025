@@ -122,7 +122,7 @@ day1_part1 = do
 #+RESULTS:
 : 1150
 
-And... bam. It just worked! No fuss. I'm not really happy with the code, but it did what it was supposed to and I didn't take me much work or brain power (save the dumb IO Monad thing).
+And... bam. It just worked! No fuss. I'm not really happy with the code, but it did what it was supposed to and it didn't take me much work or brain power (save the dumb IO Monad thing).
 
 
 * Part 1 - redux
@@ -157,9 +157,9 @@ day1_part1' = do
 
 * Part 2
 
-With Part 1 solved, it was time to unlock Part 2. Part 2 adjusted changed the requirement to count every time the dial passed or landed on 0.
+With Part 1 solved, it was time to unlock Part 2. Part 2 changed the requirement to count every time the dial passed or landed on 0.
 
-I decided to not think about the problem too hard. If I knew the starting point, and I knew how many clicks we were rotating (and the direction) I can easily calculate the number of times to pass ~0~.
+I decided to not think about the problem too hard. If I knew the starting point, and I knew how many clicks we were rotating (and the direction) I can easily calculate the number of times it passed ~0~.
 
 I decided I would ~zip~ the two lists: the starting point and the dial clicks. I would use a function that utilized guards to determine the number of zero crossings. Initially, my function type was ~Int -> Int -> Int~ which made me happy. Because of the ~zip~ I now had a tuple and ~(Int,Int) -> Int~ which made me unhappy. I'll work on being happy again later.
 
@@ -220,11 +220,11 @@ day1_part2 = do
 : 6738
 
 
-* Part 2 - Look Mom, regular functions
+* Part 2b - Look Mom, regular functions
 
-So, the ~(Int,Int) -> Int~ signature was making me sad but I wasn't sure how to "unzip" what I had so I could get back to ~Int -> Int -> Int~. In C++ I would just "apply" the tuple to the function...
+So, the ~(Int,Int) -> Int~ signature was making me sad but I wasn't sure how to "unzip" what I had so I could get back to ~Int -> Int -> Int~. In C++ I would just "apply" the function to the  tuple.
 
-And then a quick chat with Ben pushed me in the right direction. Partial application to the rescue. I can ~map~ the ~zeroCrossing'~ that wants two arguments over a list with one argument and get a list of functions that have the first argument bound and are now just needing the next argumnent. A list of functions applied in order to a list of arguments (not the cartesian) is exactly what ~zipWith~ does.
+And then a quick chat with Ben pushed me in the right direction. Partial application to the rescue. I can ~map~ the ~zeroCrossing'~ that wants two arguments over a list with one argument and get a list of functions that have the first argument bound and are now just needing the next argumnent. A list of functions applied in order to a list of arguments can be achieved with ~zipWith~. The function to pass is the function application operator: ~($)~.
 
 
 #+begin_src haskell :session day1-session :exports both :tangle no
@@ -250,6 +250,30 @@ day1_part2' = do
   let dialData = scanl rotateDial 50 clickData
 
   let crossings = zipWith ($) (map zeroCrossing' dialData) clickData
+  let zeros = foldl1 (+) crossings
+  return zeros
+#+end_src
+
+#+RESULTS:
+: 6738
+
+
+
+* Part 2c - Well... that was silly
+
+~zipWith~ has the following type:
+
+~zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]~
+
+which is exactly what I wanted to start with. While the function application operator ~($)~ was cute, it certainly wasn't needed. I can just use ~zeroCrossing'~ as-is with ~zipWith~.
+
+#+begin_src haskell :session day1-session :exports both
+day1_part2'' = do
+  input_data <- lines <$> readFile "day1_input.txt"
+  let clickData = map toClicks input_data
+  let dialData = scanl rotateDial 50 clickData
+
+  let crossings = zipWith zeroCrossing' dialData clickData
   let zeros = foldl1 (+) crossings
   return zeros
 #+end_src

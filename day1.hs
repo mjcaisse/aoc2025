@@ -1,4 +1,3 @@
--- generated via tangle from day1.org
 import Text.Read
 
 directionToSign :: Char -> Int
@@ -57,5 +56,14 @@ day1_part2' = do
   let dialData = scanl rotateDial 50 clickData
 
   let crossings = zipWith ($) (map zeroCrossing' dialData) clickData
+  let zeros = foldl1 (+) crossings
+  return zeros
+
+day1_part2'' = do
+  input_data <- lines <$> readFile "day1_input.txt"
+  let clickData = map toClicks input_data
+  let dialData = scanl rotateDial 50 clickData
+
+  let crossings = zipWith zeroCrossing' dialData clickData
   let zeros = foldl1 (+) crossings
   return zeros
