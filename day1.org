@@ -224,7 +224,7 @@ day1_part2 = do
 
 So, the ~(Int,Int) -> Int~ signature was making me sad but I wasn't sure how to "unzip" what I had so I could get back to ~Int -> Int -> Int~. In C++ I would just "apply" the function to the  tuple.
 
-And then a quick chat with Ben pushed me in the right direction. Partial application to the rescue. I can ~map~ the ~zeroCrossing'~ that wants two arguments over a list with one argument and get a list of functions that have the first argument bound and are now just needing the next argumnent. A list of functions applied in order to a list of arguments can be achieved with ~zipWith~. The function to pass is the function application operator: ~($)~.
+And then a quick chat with Ben pushed me in the right direction. Partial application to the rescue. I can ~map~ the ~zeroCrossing'~ function that wants two arguments over a list with one argument and get a list of functions that have the first argument bound and are now just needing the next argumnent. A list of functions applied in order to a list of arguments can be achieved with ~zipWith~. The function to pass is the function application operator: ~($)~.
 
 
 #+begin_src haskell :session day1-session :exports both :tangle no
