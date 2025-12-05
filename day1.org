@@ -1,0 +1,270 @@
+#+title: AoC 2025 Day 1
+#+PROPERTY: header-args:haskell :tangle ./day1.hs :mkdirp yes
+
+  
+* The Naive Start
+
+I started by opening ~ghci~ and just trying some things out. I had mixed results
+and quickly moved to writing code in an ~.hs~ file and just doing ~:l day1~ from
+~ghci~ as I iterated. After a couple of days and a fight to get literate mode
+(~org-babel~) working, I figured out that my problem was multiline mode.
+
+So, this ugly ~:{~ source block is how it is solved. The ~:{~ ghci command enters multi-line mode and the ~:}~ command exits multi-line mode. These are output for the ~org-mode~ setup but not included in the tangled ~.hs~ file.
+
+#+begin_src haskell :session day1-session :results silent :tangle no
+:{
+#+end_src
+
+The input data is in the form of a list of dial movements. They are encoded as ~Lxxx~ or ~Rxxx~ representing left or right hand turns and a number of "clicks" (e.g. ~L42~ or ~R123~). I'm just going to encode these as positive or negative movements. Pattern matching to the rescue. ~directionToSign :: Char -> Int~ will handle this.
+
+#+begin_src haskell :session day1-session :results silent
+import Text.Read
+
+directionToSign :: Char -> Int
+directionToSign 'L' = -1
+directionToSign 'R' = 1
+#+end_src
+
+
+~Strings~ are a list of ~Char~, or ~[Char]~. So, we can just use the cool ~:~ operator to distinguish the head and tail (remainder) of a list. ~(head:tail)~ does the trick. For us, the ~head~ is the direction. The ~tail~ is the number of clicks.
+
+~toClicks :: String -> Int~ will handle converting our encoded "L32" into the integer value ~-32~.
+
+So, given a list of encoded ~String~ we can now easily ~map~ that to a list of integer vectors (magnitude and direction ... buya baby).
+
+
+#+begin_src haskell :session day1-session :results silent
+toClicks :: String -> Int
+toClicks (d:v) = (directionToSign d) * (read v :: Int)
+#+end_src
+
+We have a list of turns (clicks) that are going to be made. We just need to apply the start condition and then add each successive value to see our new location. This sounds a lot like ~fold~ to me... except we want to store the intermediate state and not just the final value. Ends up... after doing some searching I found ~scanl~ which does exactly that. ~advanceDial~ is using partial function application to create a function that will take one input... the list to transform.
+
+The AoC problem has us turning a dial which means that our number system is modular. We can "fix" all of the values after ~scanl~ by performing modulus division. ~mod~ takes two parameters: the dividend and the divisor. We know the divisor: 100. The list contains the dividend values. We could use partial function application except the arguments are in the wrong order; we know the second argument and not the first argument. ~flip~ to the rescue. This flips the argument order and now we can use partial to create a function that will take one argument.
+
+In the end, we will need to count the number of ~0~ in the list. We can filter to generate a list of only the ~0~ values and then see how long the list is. We are using partial function application with ~filter~ which takes two arguments: the predicate function and the list. We are giving it one (the predicate). That will curry to a function that needs one argument. Cool ... we now have two functions that need one argument each (the bound ~filter~ and the ~length~ call on the filtered list). We can use ~.~ operator to perform function composition.
+
+#+begin_src haskell :eval never :tangle no
+c = f . g
+c x
+#+end_src
+
+is like ~f (g x)~ : invoke ~g~ with argument ~x~ and then pass the result to ~f~.
+
+
+
+#+begin_src haskell :session day1-session :results silent
+advanceDial = scanl (+) 50
+correctDial = (flip mod 100)
+
+findZeros :: [Int] -> Int
+findZeros = length . filter (==0)
+#+end_src
+
+#+begin_src haskell :session day1-session :results silent :tangle no
+:}
+#+end_src
+
+This should be enough parts to solve the first part.
+
+* Part 1
+
+** Of Files and Dragons
+
+The actual Haskell part went pretty smooth. I felt smart! I could just "make things work" (TM)
+with code and sample lists of ~Strings~. But then, I wanted to read the input data from a file
+and I felt dumb.
+
+Mind you, I didn't feel dumb right away. I found ~readFile~ and ~lines~. Writing this in ghci:
+
+#+begin_src haskell :eval never :tangle no
+ghci> lines <$> readFile "day1_input.txt"
+#+end_src
+
+just read the file in and things "Just Worked" (TM). Bam! I had a list of strings printing to
+the console. I was in love!
+
+And then I tried using some of that fancy code I had been messing with. You know, things with
+types like:
+
+#+begin_src haskell :eval never :tangle no
+toClicks :: String -> Int
+#+end_src
+
+and the compiler said, no. It said other things too, like... I have an ~IO String~ and you gave me something that wants a ~String~.
+
+Welcome to IO Monad hell. Look, I get it. I understand enough about Monads to know once you have data in the monad, you are stuck in the monad. But I just want to read some data from a file into a plain-ol-list ... like the ones I had created in my little test program.
+
+And here we sat for a very long time. Eventually, I just gave up and used a ~do~ block and arrow syntax, because that is all I could figure out:
+
+#+begin_src haskell :eval never :tangle no
+input_data <- lines <$> readFile "day1_input.txt"
+#+end_src
+
+It feels dirty. I talked to Ben Deane about it and he gave me some ideas... so perhaps day2 will be nicer. Also, Ben said my code didn't look too bad for someone who had never written Haskell. So I'm taking that as a win.
+
+The ~do~ block operates within the monad. It is syntatic sugar... and well, this is Advent of Code and I could use some sugar plums or something right now.
+
+
+** Putting it Together: A Solution
+
+Ok, so lets assemble our first Haskell try in a ~do~ block.
+
+#+begin_src haskell :session day1-session :exports both
+day1_part1 = do
+  input_data <- lines <$> readFile "day1_input.txt"
+  let rawDialData = advanceDial (map toClicks input_data)
+  let correctedDialData = map correctDial rawDialData
+  let zeros = findZeros correctedDialData
+  return zeros
+#+end_src
+
+#+RESULTS:
+: 1150
+
+And... bam. It just worked! No fuss. I'm not really happy with the code, but it did what it was supposed to and I didn't take me much work or brain power (save the dumb IO Monad thing).
+
+
+* Part 1 - redux
+
+The original attempt felt busy. This isn't code golf, and I did like the function composition and partial applications... but it just seemed like too much. So I took a step back and decided that instead of transforming the list multiple times I would just put more smarts in how the dial was rotated. ~toClicks~ and ~findZeros~ is re-used and a ~rotateDial~ function has been added.
+
+
+#+begin_src haskell :session day1-session :exports both :tangle no
+:{
+#+end_src
+
+#+begin_src haskell :session day1-session :results silent
+rotateDial :: Int -> Int -> Int
+rotateDial a b = (a + b) `mod` 100
+#+end_src
+
+#+begin_src haskell :session day1-session :exports both :tangle no
+:}
+#+end_src
+
+#+begin_src haskell :session day1-session :exports both
+day1_part1' = do
+  input_data <- lines <$> readFile "day1_input.txt"
+  let dialData = scanl rotateDial 50 (map toClicks input_data)
+  let zeros = findZeros dialData
+  return zeros
+#+end_src
+
+#+RESULTS:
+: 1150
+
+
+* Part 2
+
+With Part 1 solved, it was time to unlock Part 2. Part 2 adjusted changed the requirement to count every time the dial passed or landed on 0.
+
+I decided to not think about the problem too hard. If I knew the starting point, and I knew how many clicks we were rotating (and the direction) I can easily calculate the number of times to pass ~0~.
+
+I decided I would ~zip~ the two lists: the starting point and the dial clicks. I would use a function that utilized guards to determine the number of zero crossings. Initially, my function type was ~Int -> Int -> Int~ which made me happy. Because of the ~zip~ I now had a tuple and ~(Int,Int) -> Int~ which made me unhappy. I'll work on being happy again later.
+
+My first ~zeroCrossing~ function was:
+
+#+begin_src haskell :eval never :tangle no
+zeroCrossing :: (Int,Int) -> Int
+zeroCrossing (current, clicks)
+  | clicks < 0  = ((100 - current) + (clicks * (-1))) `quot` 100
+  | otherwise   = (current + clicks) `quot` 100
+#+end_src
+
+which seemed good enough, but also produced the wrong results. The problem of course is if the ~current~ value is ~0~ then ~(100 - 0) `quot` 100~ is going to be ~1~. Opps.
+
+I initially fixed it with the convoluted and less readable:
+
+#+begin_src haskell :eval never :tangle no
+zeroCrossing :: (Int,Int) -> Int
+zeroCrossing (current, clicks)
+  | clicks < 0  = ((current * (-1) `mod` 100) + (clicks * (-1))) `quot` 100
+  | otherwise   = (current + clicks) `quot` 100
+#+end_src
+
+This is "correct" but I think not very friendly. So I just made another guard:
+
+
+#+begin_src haskell :session day1-session :exports both :tangle no
+:{
+#+end_src
+
+#+begin_src haskell :session day1-session :exports both
+zeroCrossing :: (Int,Int) -> Int
+zeroCrossing (current, clicks)
+  | current == 0, clicks < 0 = (clicks * (-1)) `quot` 100
+  | clicks < 0               = ((100 - current) + (clicks * (-1))) `quot` 100
+  | otherwise                = (current + clicks) `quot` 100
+#+end_src
+
+#+begin_src haskell :session day1-session :exports both :tangle no
+:}
+#+end_src
+
+This is better. I should probably factor out the ~`quot` 100~ but that required that I think of another function name and I decided I didn't care that much.
+
+
+#+begin_src haskell :session day1-session :exports both
+day1_part2 = do
+  input_data <- lines <$> readFile "day1_input.txt"
+  let clickData = map toClicks input_data
+  let dialData = scanl rotateDial 50 clickData
+
+  let crossings = map zeroCrossing (zip dialData clickData)
+  let zeros = foldl1 (+) crossings
+  return zeros
+#+end_src
+
+#+RESULTS:
+: 6738
+
+
+* Part 2 - Look Mom, regular functions
+
+So, the ~(Int,Int) -> Int~ signature was making me sad but I wasn't sure how to "unzip" what I had so I could get back to ~Int -> Int -> Int~. In C++ I would just "apply" the tuple to the function...
+
+And then a quick chat with Ben pushed me in the right direction. Partial application to the rescue. I can ~map~ the ~zeroCrossing'~ that wants two arguments over a list with one argument and get a list of functions that have the first argument bound and are now just needing the next argumnent. A list of functions applied in order to a list of arguments (not the cartesian) is exactly what ~zipWith~ does.
+
+
+#+begin_src haskell :session day1-session :exports both :tangle no
+:{
+#+end_src
+
+#+begin_src haskell :session day1-session :exports both
+zeroCrossing' :: Int -> Int -> Int
+zeroCrossing' current clicks
+  | current == 0, clicks < 0 = (clicks * (-1)) `quot` 100
+  | clicks < 0               = ((100 - current) + (clicks * (-1))) `quot` 100
+  | otherwise                = (current + clicks) `quot` 100
+#+end_src
+
+#+begin_src haskell :session day1-session :exports both :tangle no
+:}
+#+end_src
+
+#+begin_src haskell :session day1-session :exports both
+day1_part2' = do
+  input_data <- lines <$> readFile "day1_input.txt"
+  let clickData = map toClicks input_data
+  let dialData = scanl rotateDial 50 clickData
+
+  let crossings = zipWith ($) (map zeroCrossing' dialData) clickData
+  let zeros = foldl1 (+) crossings
+  return zeros
+#+end_src
+
+#+RESULTS:
+: 6738
+
+In the end, I think this version makes me happier.
+
+
+* Summary
+
+This was fun. Working with a langauge that makes composing functions so easy has been a joy. Of course, this is day 1 ... the easiest of days. The hardest part was figuring out what to do with the IO monad tainted types.
+
+As a side note... I'm finding hoogle both useful and sometimes unhelpful. I think I need to read more about typeclasses.
+
+
+

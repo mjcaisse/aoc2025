@@ -1,0 +1,4 @@
+# do not checkin the input files
+*_input.txt
+*~
+
