@@ -40,9 +40,19 @@ toClicks (d:v) = (directionToSign d) * (read v :: Int)
 
 We have a list of turns (clicks) that are going to be made. We just need to apply the start condition and then add each successive value to see our new location. This sounds a lot like ~fold~ to me... except we want to store the intermediate state and not just the final value. Ends up... after doing some searching I found ~scanl~ which does exactly that. ~advanceDial~ is using partial function application to create a function that will take one input... the list to transform.
 
+#+begin_src haskell :session day1-session :results silent
+advanceDial = scanl (+) 50
+#+end_src
+
 The AoC problem has us turning a dial which means that our number system is modular. We can "fix" all of the values after ~scanl~ by performing modulus division. ~mod~ takes two parameters: the dividend and the divisor. We know the divisor: 100. The list contains the dividend values. We could use partial function application except the arguments are in the wrong order; we know the second argument and not the first argument. ~flip~ to the rescue. This flips the argument order and now we can use partial to create a function that will take one argument.
 
-In the end, we will need to count the number of ~0~ in the list. We can filter to generate a list of only the ~0~ values and then see how long the list is. We are using partial function application with ~filter~ which takes two arguments: the predicate function and the list. We are giving it one (the predicate). That will curry to a function that needs one argument. Cool ... we now have two functions that need one argument each (the bound ~filter~ and the ~length~ call on the filtered list). We can use ~.~ operator to perform function composition.
+#+begin_src haskell :session day1-session :results silent
+correctDial = (flip mod 100)
+#+end_src
+
+In the end, we will need to count the number of ~0~ in the list. We can filter to generate a list of only the ~0~ values and then get the length of the filtered list. We are using partial function application with ~filter~ which takes two arguments: the predicate function and the list. We are providing the predicate. That will curry to a function that needs one argument. Cool ... we now have two functions that need one argument each (the bound ~filter~ and the ~length~ call on the filtered list). We can use ~.~ operator to perform function composition.
+
+The ~.~ operator composes two functions such that:
 
 #+begin_src haskell :eval never :tangle no
 c = f . g
@@ -52,10 +62,7 @@ c x
 is like ~f (g x)~ : invoke ~g~ with argument ~x~ and then pass the result to ~f~.
 
 
-
 #+begin_src haskell :session day1-session :results silent
-advanceDial = scanl (+) 50
-correctDial = (flip mod 100)
 
 findZeros :: [Int] -> Int
 findZeros = length . filter (==0)
@@ -65,7 +72,7 @@ findZeros = length . filter (==0)
 :}
 #+end_src
 
-This should be enough parts to solve the first part.
+This should be enough to solve the first puzzle part.
 
 * Part 1
 
