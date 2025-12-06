@@ -1,0 +1,174 @@
+#+title: AoC 2025 Day 2
+#+PROPERTY: header-args:haskell :tangle ./day2.hs :mkdirp yes
+
+
+* Part 1
+
+** Lists of Lists of Lists
+
+Like a kid eating the yummy parts first, I'm going to start with the mathy portions while I push the peas-of-parsing-the-input around on the plate in my head.
+
+This puzzle requires that you take a range of numbers and find values that have repeating patterns. For example, 111 or 1212 or 423423423. These values should then be added together for the final answer.
+
+Here is my first thought:
+
+  1. Convert to values into ~String~ representations
+    - 123123 -> "123123"
+  2. For each ~String~, convert into a list of lists of evenly grouped parts
+    - ~[["1", "2", "3", "1", "2", "3"], ["12", "31", "23"], ["123", "123"]]~
+  3. If a list contains all matching values then we have found a number with repeating patterns.
+
+A ~String~ is just a list, ~[Char]~. So I think that means we have lists of lists of lists of lists.... or something like that. Sounds pretty Lispy.
+
+
+** Coding the thoughts
+
+Note: Our ugly little hack to make literate mode and ghci play nicely.
+
+#+begin_src haskell :session day2-session :exports both :tangle no
+:{
+#+end_src
+
+
+Let's see if this makes sense in code.
+
+The data comes in as a list of ranges and ranges are trivial in Haskell. ~324-565~ can be written as the lazy list ~[324..565]~.
+
+The ~show~ function will do the ~Int -> String~ for us.
+
+#+begin_src haskell :session day2-session :exports both
+rangeAsStrings :: Int -> Int -> [String]
+rangeAsStrings a b = map show [a..b]
+#+end_src
+
+We can divide our string in parts like this:
+
+#+begin_src haskell :session day2-session :exports both
+chunkString :: String -> Int -> [String]
+chunkString [] _ = []
+chunkString s cnt = take cnt s : (chunkString (drop cnt s) cnt)
+#+end_src
+
+The ~:~ operator is really neat!
+
+#+begin_src haskell :eval never :tangle no
+ghci> chunkString "123456" 3
+["123","456"]
+#+end_src
+
+And then ask if all of the elements in the array are equal with the ~all~ function. We need to pick an _identity_ value for this operation. There are some good maths that explain why an empty list should be ~True~ for ~and~ but I want the empty list to be ~False~. I hear fooling yourself is the easiest.
+
+#+begin_src haskell :session day2-session :exports both
+allSame :: Eq a => [a] -> Bool
+allSame [] = False
+allSame (x:xs) = all (==x) xs
+#+end_src
+
+The ~chunkString~ function will work with values that are not evenly divisible into the string length. The comparison, ~allSame~, will fail as it should. It is nice to have things "Just Work" (TM) without special cases, in fact this is what we strive for. It also rubs my sensibilities wrong to chunk a 13-digit number into 13 different lists for comparison when we can easily calculate which ones are candidates. Calculating the list of candidate lengths is pretty straight forward with a list comprehension.
+
+#+begin_src haskell :session day2-session :exports both :tangle no
+groupLengths :: Int -> [Int]
+groupLengths x = [v | v <- [1..(x `quot` 2)], x `mod` v == 0]
+#+end_src
+
+It looks like we have the building blocks to get a list of chunked strings given an initial input string. List comprehension should do the trick to create a ~String -> [[String]]~.
+
+#+begin_src haskell :session day2-session :exports both 
+candidateChunks :: String -> [[String]]
+candidateChunks s = [chunkString s cnt | cnt <- groupLengths (length s)]
+#+end_src
+
+#+begin_quote
+I want to pause a minute and bask in the glories of Haskell. I thought this was going to take a bit more code. I wrote the type signature and then the implementation line just fell out... tangled the file, loaded into ghci ... it just works. Haskell is so elegant.
+#+end_quote
+
+
+And now, given a string lets see if it has repeating chunks and is therefore a value we are looking for.
+
+#+begin_src haskell :session day2-session :exports both
+stringHasRepeats :: String -> Bool
+stringHasRepeats s = or (map allSame (candidateChunks s))
+#+end_src
+
+
+Woot! and now we have a predicate that can check if a string meets our requirements. Composing a predicate means we can now easily filter a list for the things that match the predicate.
+
+*** Being a Good Reader
+
+Good readers are hard to find. I went back to look for sample input from the question and realized that I read the "specification" wrong. The repeating pattern only repeats _twice_. So, "1212" or "123123" fit the pattern but "121212" does _not_. That means my implementation is wrong. I've been around the block enough with AoC to know that being more generic is usually better when you get to Part 2. Strickly speaking, the only thing that has to change is the ~groupLength~ implementation which only needs to return ~[2]~ or ~[]~. So I'm going to make that minor change for now.
+
+#+begin_src haskell :session day2-session :exports both
+groupLengths :: Int -> [Int]
+groupLengths x = [v | v <- [(x `quot` 2)], x `mod` 2 == 0]
+#+end_src
+
+
+** Assembling the Parts
+
+Let's put our new shiny predicate to work.
+
+#+begin_src haskell :session day2-session :exports both
+intHasRepeats :: Int -> Bool
+intHasRepeats = stringHasRepeats . show
+
+filterSillyPatterns :: [Int] -> [Int]
+filterSillyPatterns = filter intHasRepeats
+#+end_src
+
+Assuming the input data is in a form of a list of ranges or a list of lists, ~[[Int]]~, then it should be a pretty simple process of adding up all the silly patterns. We can just compose a function to do this (have I mentioned how much I'm loving Haskell?):
+
+#+begin_src haskell :session day2-session :exports both
+addSillyPatterns :: [[Int]] -> Int
+addSillyPatterns = sum . concat . map filterSillyPatterns
+#+end_src
+
+
+Bam! That is it.
+
+#+begin_src haskell :eval never :tangle no
+ghci> addSillyPatterns input_ranges
+1227775554
+#+end_src
+
+
+*** 
+Note: End of our ugly little hack to make literate mode and ghci play nicely.
+
+#+begin_src haskell :session day2-session :exports both :tangle no
+:{
+#+end_src
+
+
+
+** Peas
+
+Sometimes, you have so few peas on your plate that you find ways to hide them among the scraps. The input data set is really small for this puzzle day and good software engineers are just-the-right-amount-of-lazy ... so I'm going to "manually" convert the values. Is this cheating? Maybe. Do I care right now? No.  ~(o;~
+
+The input file looks something like:
+
+#+begin_src text :eval never :tangle no
+45-76,123-897,1000-7666
+#+end_src
+
+I'm just going to copy that into my editor and do the transform so it looks like:
+
+#+begin_src haskell :eval never :tangle no
+input_ranges = [[45..76],[123..897],[1000..7666]]
+#+end_src
+
+I'll eat my peas tomorrow.
+
+
+* Part 2
+
+#+begin_quote
+I've been around the block enough with AoC to know that being more generic is usually better when you get to Part 2.
+#+end_quote
+
+Look at that! I get to quote myself from just a few minutes ago. Buhahahaha! So, my _original_ implementation is the solution for Part 2.
+
+Day 2 is the books and I didn't need to eat any vegetables!
+
+
+
+
