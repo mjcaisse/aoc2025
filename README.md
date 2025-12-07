@@ -109,6 +109,7 @@ You can find the puzzles at [Advent of Code 2025](https://adventofcode.com/2025/
 
 github does a decent job at rendering `org` mode files. These should be readible as-is. The tangled `.hs` files are also checked in.
 
-- [*Day 1*](day1.org) - [/tangled .hs/](day1.hs)
-- [*Day 2*](day2.org) - [/tangled .hs/](day2.hs)
+- [**Day 1**](day1.org) - [*tangled `.hs`*](day1.hs)
+- [**Day 2**](day2.org) - [*tangled `.hs`*](day2.hs)
+- [**Day 3**](day3.org) - [*tangled `.hs`*](day3.hs)
 
