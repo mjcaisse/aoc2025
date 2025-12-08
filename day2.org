@@ -95,7 +95,7 @@ Woot! and now we have a predicate that can check if a string meets our requireme
 
 *** Being a Good Reader
 
-Good readers are hard to find. I went back to look for sample input from the question and realized that I read the "specification" wrong. The repeating pattern only repeats _twice_. So, "1212" or "123123" fit the pattern but "121212" does _not_. That means my implementation is wrong. I've been around the block enough with AoC to know that being more generic is usually better when you get to Part 2. Strickly speaking, the only thing that has to change is the ~groupLength~ implementation which only needs to return ~[2]~ or ~[]~. So I'm going to make that minor change for now.
+Good readers are hard to find. I went back to look for sample input from the question and realized that I read the "specification" wrong. The repeating pattern only repeats _twice_. So, "1212" or "123123" fit the pattern but "121212" does _not_. That means my implementation is wrong. I've been around the block enough with AoC to know that being more generic is usually better when you get to Part 2. Strickly speaking, the only thing that has to change is the ~groupLength~ implementation which only needs to return ~[length/2]~ or ~[]~. So I'm going to make that minor change for now.
 
 #+begin_src haskell :session day2-session :exports both
 groupLengths :: Int -> [Int]
