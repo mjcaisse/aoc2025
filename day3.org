@@ -6,9 +6,9 @@
 
 ** But First, Dessert
 
-I looked at the input data and I'm going to neeed to eat my parsing peas this time. But first, we are going to solve the algorithm part.
+I looked at the input data and I'm going to need to eat my parsing peas this time. But first, we are going to solve the algorithm part.
 
-The input data consists of a series of integers. You need to select the two values that when combined in left to right order will generate the largest number. For example, if the series of digits was ~424584136~ then the ~8~ and then the ~6~ would form ~86~.
+The input data consists of a series of integers. We need to select the two values that when combined in left to right order will generate the largest number. For example, if the series of digits was ~424584136~ then the ~8~ and then the ~6~ would form ~86~.
 
 The puzzle answer is the sum of the constructed number from all of the lines.
 
