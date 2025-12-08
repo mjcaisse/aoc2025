@@ -88,6 +88,7 @@ totalJoltage xs = sum $ map maxJolt xs
 Well, it is time to figure out how to parse this stuff. I /hope/ that I can just do something like, read the file into a ~[[Int]]~ and then use ~totalJoltage~. I expect that there will be some dance because the signature is going to be something like ~IO [[Int]]~ ... so perhaps we use ~fmap~? I really don't know.
 
 Step 1, read the data into the desired format
+
 Step 2, figure out how to apply the function without needing to use a ~do~ statement
 
 I recommend reading "Learn You A Haskell For Great Good". I read the first 6 chapters before starting Day 1. As I was thinking about how to convert a ~Char -> Int~ and eating pie, I was reading through chapter 7 and look at that! ~Data.Char~ has a function called ~digitToInt~ that does exactly that!
@@ -142,24 +143,25 @@ To illustrate, if we are making a 5 digit number from this sequence:
 
   after getting the first digit we have
 
-    sequence: ~[9]~
-    remaining: ~[4,2,9]~
+    - sequence: ~[9]~
+    - remaining: ~[4,2,9]~
 
 As you can see, we already don't have enough digits to finish the sequence.
 
 We want to reserve digits and then append one at a time as we get the next digit.
 
 So this sequence ~[4,6,7,2,9,4,2,9]~ gets divided into:
-    current: ~[4,6,7,2]~
-    reserve: ~[9,4,2,9]~
 
-  after gettting the first digit we append and then have:
+    - current: ~[4,6,7,2]~
+    - reserve: ~[9,4,2,9]~
 
-    sequence: ~[7]~
-    current: ~[2,9]~
-    reserve: ~[4,2,9]~
+after gettting the first digit we append and then have:
 
-The function ~joltSeq~ receives the current and reserve lists and produces appropritae sequence using recursion. The recursion is terminated if either the current or reserve list runs out of values to process.
+    - sequence: ~[7]~
+    - current: ~[2,9]~
+    - reserve: ~[4,2,9]~
+
+The function ~joltSeq~ receives the current and reserve lists and produces the appropriate sequence using recursion. The recursion is terminated if either the current or reserve list runs out of values to process.
 
 #+begin_src haskell :session day3-session :exports both
 joltSeq :: [Int] -> [Int] -> [Int]
@@ -191,3 +193,10 @@ totalJoltage' xs = sum $ map (maxJolt' 12) xs
 day3_part2 :: IO Int
 day3_part2 = fmap totalJoltage' day3_input
 #+end_src
+
+
+* Thoughts
+
+There are several parts of my solution that I'm not happy with. I suspect there are "better" ways to accomplish these things in Haskell and part of the fun will be revisiting the exercises when I'm done to see what I have learned.
+
+Haskell is really great! Day 3 in the books and I'm loving it.
