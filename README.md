@@ -113,3 +113,26 @@ github does a decent job at rendering `org` mode files. These should be readible
 - [**Day 2**](day2.org) - [*tangled `.hs`*](day2.hs)
 - [**Day 3**](day3.org) - [*tangled `.hs`*](day3.hs)
 
+
+## References
+
+I have some references that I'm using during this journey.
+
+_Things I'm Actually Reading_
+
+- [**"Learn You a Haskell For Great Good"**](https://learnyouahaskell.github.io/)
+  This has been the key reference for my journey. The book is great! I read the first 6-chapters before
+  starting Day 1. This was primarily a function of fly across the U.S. during the holiday and not my
+  non-existent self-control.
+
+- [**Hoogle**](https://hoogle.haskell.org/)
+  I have a love/hate relationship going on so far with Hoogle. I assume that as I grow in this language that it will turn more love.
+
+- **Favorite Search Engine**
+  I have used the search engine far less than I thought I might. Occassionally I put some search terms in to help find a function I know
+  must exist.
+
+_Things I Have Collected_
+
+- Various University Websites ... I saved links to a bunch but haven't used any yet
+
